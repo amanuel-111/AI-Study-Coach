@@ -25,6 +25,90 @@
     @apply bg-white rounded-lg shadow-md p-6;
   }
 
+  /* Modern markdown prose styles */
+  .prose {
+    @apply text-gray-800 leading-relaxed;
+    max-width: none;
+  }
+
+  .prose p {
+    @apply mb-4 last:mb-0;
+  }
+
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    @apply text-gray-900 font-semibold leading-tight;
+  }
+
+  .prose h1 {
+    @apply text-xl mt-6 mb-4 pb-2 border-b border-gray-200 first:mt-0;
+  }
+
+  .prose h2 {
+    @apply text-lg mt-5 mb-3 first:mt-0;
+  }
+
+  .prose h3 {
+    @apply text-base mt-4 mb-2 first:mt-0;
+  }
+
+  .prose ul, .prose ol {
+    @apply mb-4 last:mb-0;
+  }
+
+  .prose li {
+    @apply leading-relaxed;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-blue-200 pl-4 py-2 bg-blue-50 text-gray-700 italic mb-4 last:mb-0;
+  }
+
+  .prose table {
+    @apply mb-4 last:mb-0 w-full border-collapse;
+  }
+
+  .prose th, .prose td {
+    @apply px-4 py-2 text-left border-b border-gray-200;
+  }
+
+  .prose th {
+    @apply bg-gray-50 font-semibold text-gray-900;
+  }
+
+  .prose td {
+    @apply text-gray-800;
+  }
+
+  .prose hr {
+    @apply border-gray-200 my-6;
+  }
+
+  .prose strong {
+    @apply font-semibold text-gray-900;
+  }
+
+  .prose em {
+    @apply italic text-gray-800;
+  }
+
+  .prose a {
+    @apply text-primary-600 hover:text-primary-700 underline;
+  }
+
+  /* Inline code styling */
+  .prose :not(pre) > code {
+    @apply bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  /* Code block container */
+  .prose pre {
+    @apply mb-4 last:mb-0 rounded-lg overflow-hidden;
+  }
+
+  .prose pre code {
+    @apply bg-transparent text-inherit p-0 rounded-none font-normal;
+  }
+
   /* Chat message animations */
   .message-enter {
     @apply opacity-0 transform translate-y-2;
@@ -138,4 +222,71 @@
   .ai-thinking {
     animation: pulse-glow 2s infinite;
   }
+}
+
+/* Highlight.js overrides for better styling */
+.hljs {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+  padding: 1rem !important;
+  border-radius: 0 0 0.5rem 0.5rem !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+/* Basic syntax highlighting colors */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-name,
+.hljs-strong {
+  color: #f472b6;
+  font-weight: bold;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-section,
+.hljs-built_in,
+.hljs-literal,
+.hljs-type,
+.hljs-addition,
+.hljs-tag,
+.hljs-quote,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #34d399;
+}
+
+.hljs-comment,
+.hljs-deletion,
+.hljs-meta {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.hljs-number,
+.hljs-regexp,
+.hljs-symbol,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-link,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: #fbbf24;
+}
+
+.hljs-function,
+.hljs-class,
+.hljs-title.class_,
+.hljs-title.function_ {
+  color: #60a5fa;
+}
+
+.hljs-attr,
+.hljs-attribute {
+  color: #f87171;
 }

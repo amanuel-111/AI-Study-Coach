@@ -4,15 +4,26 @@ interface UseTypingEffectOptions {
   text: string;
   speed?: number;
   startDelay?: number;
+  enabled?: boolean; // Add option to enable/disable the effect
 }
 
-export const useTypingEffect = ({ text, speed = 30, startDelay = 500 }: UseTypingEffectOptions) => {
+export const useTypingEffect = ({ 
+  text, 
+  speed = 30, 
+  startDelay = 500, 
+  enabled = true 
+}: UseTypingEffectOptions) => {
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    if (!text) return;
+    if (!text || !enabled) {
+      setDisplayedText(text);
+      setIsTyping(false);
+      setIsComplete(true);
+      return;
+    }
 
     setDisplayedText('');
     setIsTyping(false);
@@ -62,7 +73,7 @@ export const useTypingEffect = ({ text, speed = 30, startDelay = 500 }: UseTypin
     }, startDelay);
 
     return () => clearTimeout(startTimeout);
-  }, [text, speed, startDelay]);
+  }, [text, speed, startDelay, enabled]);
 
   return { displayedText, isTyping, isComplete };
 };

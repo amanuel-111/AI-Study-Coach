@@ -67,7 +67,7 @@ router.post('/message', authenticate, async (req: AuthRequest, res, next) => {
     const aiResponse = await AIService.generateResponse(message, context);
 
     // Save AI response
-    await prisma.chatMessage.create({
+    const aiMessage = await prisma.chatMessage.create({
       data: {
         sessionId: session.id,
         role: 'ASSISTANT',
@@ -75,10 +75,20 @@ router.post('/message', authenticate, async (req: AuthRequest, res, next) => {
       }
     });
 
+    // Get updated session with all messages
+    const updatedSession = await prisma.chatSession.findUnique({
+      where: { id: session.id },
+      include: {
+        messages: { orderBy: { timestamp: 'asc' } }
+      }
+    });
+
     res.json({
       sessionId: session.id,
       response: aiResponse,
-      timestamp: new Date()
+      timestamp: new Date(),
+      messages: updatedSession?.messages || [],
+      aiMessageId: aiMessage.id
     });
   } catch (error) {
     next(error);

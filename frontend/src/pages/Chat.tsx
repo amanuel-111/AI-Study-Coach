@@ -29,6 +29,7 @@ const Chat: React.FC = () => {
   const [message, setMessage] = useState('');
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [lastSentMessageId, setLastSentMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -49,6 +50,16 @@ const Chat: React.FC = () => {
   const sendMessageMutation = useMutation(chatAPI.sendMessage, {
     onSuccess: (data) => {
       setCurrentSessionId(data.data.sessionId);
+      // Track the ID of the AI message we just received to enable typing animation
+      if (data.data.aiMessageId) {
+        setLastSentMessageId(data.data.aiMessageId);
+        
+        // Clear the typing animation state after a reasonable time
+        // This prevents interference with future messages
+        setTimeout(() => {
+          setLastSentMessageId(null);
+        }, 10000); // 10 seconds should be enough for most messages
+      }
       queryClient.invalidateQueries('chatSessions');
       queryClient.invalidateQueries(['chatSession', data.data.sessionId]);
       setMessage('');
@@ -85,11 +96,6 @@ const Chat: React.FC = () => {
     }
   };
 
-  const startNewChat = () => {
-    setCurrentSessionId(null);
-    setShowSidebar(false);
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -98,7 +104,17 @@ const Chat: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Quick prompts for getting started
+  // Clear typing animation state when switching sessions
+  useEffect(() => {
+    setLastSentMessageId(null);
+  }, [currentSessionId]);
+
+  // Reset session loaded flag when starting new chat
+  const startNewChat = () => {
+    setCurrentSessionId(null);
+    setLastSentMessageId(null);
+    setShowSidebar(false);
+  };
   const quickPrompts = [
     {
       icon: BookOpen,
@@ -170,6 +186,7 @@ const Chat: React.FC = () => {
                     }`}
                     onClick={() => {
                       setCurrentSessionId(session.id);
+                      setLastSentMessageId(null); // Clear typing animation for historical messages
                       setShowSidebar(false);
                     }}
                   >
@@ -235,7 +252,12 @@ const Chat: React.FC = () => {
         <div className="flex-1 overflow-y-auto">
           {messagesLoading ? (
             <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">
+                  {currentSessionId ? 'Loading conversation...' : 'Loading messages...'}
+                </p>
+              </div>
             </div>
           ) : messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-8">
@@ -276,7 +298,7 @@ const Chat: React.FC = () => {
                   key={msg.id}
                   className={`flex ${msg.role === 'USER' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`flex space-x-3 max-w-3xl ${msg.role === 'USER' ? 'flex-row-reverse space-x-reverse' : ''}`}>
+                  <div className={`flex space-x-3 max-w-4xl w-full ${msg.role === 'USER' ? 'flex-row-reverse space-x-reverse' : ''}`}>
                     {/* Avatar */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                       msg.role === 'USER' 
@@ -293,40 +315,44 @@ const Chat: React.FC = () => {
                     </div>
                     
                     {/* Message Content */}
-                    {msg.role === 'USER' ? (
-                      <div className="bg-primary-600 text-white rounded-2xl px-4 py-3 message-fade-in">
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {msg.content}
+                    <div className="flex-1 min-w-0">
+                      {msg.role === 'USER' ? (
+                        <div className="bg-primary-600 text-white rounded-2xl px-4 py-3 message-fade-in max-w-2xl ml-auto">
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                            {msg.content}
+                          </div>
+                          <div className="text-xs mt-2 text-primary-100">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </div>
                         </div>
-                        <div className="text-xs mt-2 text-primary-100">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
-                        </div>
-                      </div>
-                    ) : (
-                      <TypewriterMessage
-                        content={msg.content}
-                        timestamp={msg.timestamp}
-                        isLatest={index === messages.length - 1 && !sendMessageMutation.isLoading}
-                      />
-                    )}
+                      ) : (
+                        <TypewriterMessage
+                          content={msg.content}
+                          timestamp={msg.timestamp}
+                          isLatest={msg.id === lastSentMessageId}
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
               
               {sendMessageMutation.isLoading && (
                 <div className="flex justify-start">
-                  <div className="flex space-x-3 max-w-3xl">
+                  <div className="flex space-x-3 max-w-4xl w-full">
                     <div className="w-8 h-8 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center ai-thinking">
                       <Sparkles className="w-4 h-4 text-white" />
                     </div>
-                    <div className="bg-gray-100 text-gray-900 rounded-2xl px-4 py-3 message-fade-in">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="bg-white border border-gray-200 rounded-2xl px-6 py-4 shadow-sm message-fade-in">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <span className="text-sm text-gray-600 font-medium">AI is thinking...</span>
                         </div>
-                        <span className="text-sm text-gray-600 font-medium">AI is thinking...</span>
                       </div>
                     </div>
                   </div>
